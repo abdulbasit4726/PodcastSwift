@@ -12,7 +12,10 @@ class PlayersDetailView: UIView {
     // MARK: - IBOutlets
     @IBOutlet weak var lblTitle: UILabel!
     @IBOutlet weak var lblAuthor: UILabel!
+    @IBOutlet weak var lblTotalTime: UILabel!
+    @IBOutlet weak var lblCurrentTime: UILabel!
     @IBOutlet weak var btnPlay: UIButton!
+    @IBOutlet weak var currentTimeSlider: UISlider!
     @IBOutlet weak var episodeImageView: UIImageView! {
         didSet {
             episodeImageView.layer.cornerRadius = 5
@@ -41,10 +44,9 @@ class PlayersDetailView: UIView {
     // MARK: - Initialization
         override func awakeFromNib() {
             super.awakeFromNib()
-            let time = CMTimeMake(value: 1, timescale: 3)
-            player.addBoundaryTimeObserver(forTimes: [NSValue(time: time)], queue: .main) { [unowned self] in
-                self.transformImageToLarge()
-            }
+            
+            observePlayerCurrentTime()
+            observePlayerStartTime()
         }
     
     // MARK: - Functions
@@ -68,6 +70,34 @@ class PlayersDetailView: UIView {
         }
     }
     
+    fileprivate func observePlayerCurrentTime() {
+        let interval = CMTimeMake(value: 1,timescale: 2)
+        player.addPeriodicTimeObserver(forInterval: interval, queue: .main) {  [weak self] time in
+            self?.lblCurrentTime.text = time.formatTimeString()
+            self?.lblTotalTime.text = self?.player.currentItem?.duration.formatTimeString()
+            self?.updateCurrentTimeSlider()
+        }
+    }
+    
+    fileprivate func observePlayerStartTime() {
+        let time = CMTimeMake(value: 1, timescale: 1)
+        player.addBoundaryTimeObserver(forTimes: [NSValue(time: time)], queue: .main) { [weak self] in
+            self?.transformImageToLarge()
+        }
+    }
+    
+    fileprivate func updateCurrentTimeSlider() {
+        let seconds = CMTimeGetSeconds(player.currentTime())
+        let totalSeconds = CMTimeGetSeconds(player.currentItem?.duration ?? CMTimeMake(value: 1, timescale: 1))
+        self.currentTimeSlider.value = Float(seconds / totalSeconds)
+    }
+    
+    fileprivate func seekToTime(delta: Int64) {
+        let seconds = CMTimeMake(value: delta, timescale: 1)
+        let seekTime = CMTimeAdd(player.currentTime(), seconds)
+        player.seek(to: seekTime)
+    }
+    
     // MARK: - IBActions
     @IBAction private func btnDismiss(_ sender: UIButton) {
         self.removeFromSuperview()
@@ -83,5 +113,23 @@ class PlayersDetailView: UIView {
             sender.setImage(UIImage(named: "play"), for: .normal)
             transformImageToSmall()
         }
+    }
+    
+    @IBAction fileprivate func handlePlaySlider(_ sender: UISlider) {
+        let duration = CMTimeGetSeconds(player.currentItem?.duration ?? CMTime.zero)
+        let seekTime = CMTimeMakeWithSeconds(Double(sender.value) * duration, preferredTimescale: 1)
+        player.seek(to: seekTime)
+    }
+    
+    @IBAction fileprivate func handleVolumeSlider(_ sender: UISlider) {
+        player.volume = sender.value
+    }
+    
+    @IBAction fileprivate func btnRewind(_ sender: Any) {
+        seekToTime(delta: -15)
+    }
+    
+    @IBAction fileprivate func btnFastForward(_ sender: Any) {
+        seekToTime(delta: 15)
     }
 }
