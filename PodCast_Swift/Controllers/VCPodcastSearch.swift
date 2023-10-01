@@ -14,6 +14,7 @@ class VCPodcastSearch: UITableViewController, UISearchBarDelegate {
     var podcasts: [Podcast] = []
     let cellId = "cellId"
     let searchController = UISearchController(searchResultsController: nil)
+    var timer: Timer?
     
     // MARK: - ViewDidLoad
     override func viewDidLoad() {
@@ -40,10 +41,14 @@ class VCPodcastSearch: UITableViewController, UISearchBarDelegate {
     
     // MARK: - SearchBar delegate function
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
-        APIService.shared.fetchPodcasts(searchText: searchText) { podcasts in
-            self.podcasts = podcasts
-            self.tableView.reloadData()
-        }
+        timer?.invalidate()
+        timer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false, block: { _ in
+            APIService.shared.fetchPodcasts(searchText: searchText) { podcasts in
+                LoaderView.shared.hideLoader()
+                self.podcasts = podcasts
+                self.tableView.reloadData()
+            }
+        })
     }
     
     // MARK: - TableView Delegate Functions
@@ -65,6 +70,14 @@ class VCPodcastSearch: UITableViewController, UISearchBarDelegate {
             return 250
         }
         return 0
+    }
+    
+    override func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
+        return LoaderView.shared.showLoader()
+    }
+    
+    override func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
+        return podcasts.isEmpty ? 200 : 0
     }
     
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {

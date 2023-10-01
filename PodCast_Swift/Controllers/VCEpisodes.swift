@@ -23,7 +23,7 @@ class VCEpisodes: UITableViewController {
     // MARK: - ViewDidLoad
     override func viewDidLoad() {
         super.viewDidLoad()
-    setupTableView()
+        setupTableView()
     }
     
     // MARK: - Functions
@@ -33,15 +33,24 @@ class VCEpisodes: UITableViewController {
     
     fileprivate func fetchEpisodes() {
         guard let feedUrl = podcast?.feedUrl else { return }
-        APIService.shared.fetchEpisodes(feedUrl: feedUrl) { episodes in
-            self.episodes = episodes
+        APIService.shared.fetchEpisodes(feedUrl: feedUrl) {[weak self] episodes in
+            LoaderView.shared.hideLoader()
+            self?.episodes = episodes
             DispatchQueue.main.async {
-                self.tableView.reloadData()
+                self?.tableView.reloadData()
             }
         }
     }
     
     // MARK: - Tableview delegate methods
+    override func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
+        return LoaderView.shared.showLoader()
+    }
+    
+    override func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
+        return episodes.isEmpty ? 200 : 0
+    }
+    
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         return episodes.count
     }
