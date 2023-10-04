@@ -48,7 +48,8 @@ class MainTabBarController: UITabBarController {
         minimizeTopAnchor.isActive = true
         UIView.animate(withDuration: 0.5, delay: 0, usingSpringWithDamping: 0.7, initialSpringVelocity: 1) {
             self.view.layoutIfNeeded()
-            self.tabBar.isHidden = false
+//            self.tabBar.isHidden = false
+            self.tabBar.alpha = 1
             self.playerDetailView.mainPlayerStackView.alpha = 0
             self.playerDetailView.miniPlayerView.alpha = 1
         }
@@ -66,7 +67,8 @@ class MainTabBarController: UITabBarController {
         
         UIView.animate(withDuration: 0.5, delay: 0, usingSpringWithDamping: 0.7, initialSpringVelocity: 1) {
             self.view.layoutIfNeeded()
-            self.tabBar.isHidden = true
+            self.tabBar.alpha = 0
+//            self.tabBar.isHidden = true
             self.playerDetailView.mainPlayerStackView.alpha = 1
             self.playerDetailView.miniPlayerView.alpha = 0
         }

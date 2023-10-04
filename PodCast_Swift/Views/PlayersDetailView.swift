@@ -12,7 +12,6 @@ class PlayersDetailView: UIView {
     // MARK: - IBOutlets
     @IBOutlet weak var mainPlayerStackView: UIStackView!
     @IBOutlet weak var miniPlayerView: UIView!
-    @IBOutlet weak var miniPlayerImageView: UIImageView!
     @IBOutlet weak var lblMiniPlayerTitle: UILabel!
     @IBOutlet weak var lblTitle: UILabel!
     @IBOutlet weak var lblAuthor: UILabel!
@@ -20,6 +19,11 @@ class PlayersDetailView: UIView {
     @IBOutlet weak var lblCurrentTime: UILabel!
     @IBOutlet weak var btnPlay: UIButton!
     @IBOutlet weak var currentTimeSlider: UISlider!
+    @IBOutlet weak var miniPlayerImageView: UIImageView! {
+        didSet {
+            miniPlayerImageView.layer.cornerRadius = 5
+        }
+    }
     @IBOutlet weak var episodeImageView: UIImageView! {
         didSet {
             episodeImageView.layer.cornerRadius = 5
@@ -28,11 +32,14 @@ class PlayersDetailView: UIView {
     }
     @IBOutlet weak var btnMiniPlayerPause: UIButton! {
         didSet {
+            btnMiniPlayerPause.imageView?.contentMode  = .scaleAspectFit
+            btnMiniPlayerPause.transform = shrinkTransform
             btnMiniPlayerPause.addTarget(self, action: #selector(handlePlayPause), for: .touchUpInside)
         }
     }
     @IBOutlet weak var btnMiniPlayerFastForward: UIButton! {
         didSet {
+            btnMiniPlayerFastForward.transform = shrinkTransform
             btnMiniPlayerFastForward.addTarget(self, action: #selector(handleMiniFastForward), for: .touchUpInside)
         }
     }
@@ -43,8 +50,8 @@ class PlayersDetailView: UIView {
             lblMiniPlayerTitle.text = episode.title
             lblTitle.text = episode.title
             guard let url = URL(string: episode.imageUrl ?? "") else { return }
-            episodeImageView.sd_setImage(with: url)
-            miniPlayerImageView.sd_setImage(with: url)
+            episodeImageView.sd_setImage(with: url, placeholderImage: UIImage(named: "podcast"))
+            miniPlayerImageView.sd_setImage(with: url, placeholderImage: UIImage(named: "podcast"))
             lblAuthor.text = episode.author
             playEpisode()
         }
@@ -77,6 +84,7 @@ class PlayersDetailView: UIView {
         self.player.replaceCurrentItem(with: playerItem)
         player.play()
         btnPlay.setImage(UIImage(named: "pause"), for: .normal)
+        btnMiniPlayerPause.setImage(UIImage(named: "pause"), for: .normal)
     }
     
     fileprivate func transformImageToLarge() {
