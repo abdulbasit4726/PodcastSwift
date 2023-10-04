@@ -19,6 +19,7 @@ class VCEpisodes: UITableViewController {
     }
     var episodes: [Episode] = []
     private let cellId = "cellId"
+    var isShowLoading = false
     
     // MARK: - ViewDidLoad
     override func viewDidLoad() {
@@ -31,24 +32,36 @@ class VCEpisodes: UITableViewController {
         tableView.register(UINib(nibName: "EpisodeCell", bundle: nil), forCellReuseIdentifier: cellId)
     }
     
+    func showLoader() {
+        self.isShowLoading = true
+        self.episodes.removeAll()
+        self.tableView.reloadData()
+    }
+    
+    func hideLoader() {
+        self.isShowLoading = false
+        LoaderView.shared.hideLoader()
+        self.tableView.reloadData()
+    }
+    
     fileprivate func fetchEpisodes() {
         guard let feedUrl = podcast?.feedUrl else { return }
+        self.showLoader()
         APIService.shared.fetchEpisodes(feedUrl: feedUrl) {[weak self] episodes in
-            LoaderView.shared.hideLoader()
-            self?.episodes = episodes
             DispatchQueue.main.async {
-                self?.tableView.reloadData()
+                self?.episodes = episodes
+                self?.hideLoader()
             }
         }
     }
     
     // MARK: - Tableview delegate methods
     override func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
-        return LoaderView.shared.showLoader()
+        return isShowLoading ? LoaderView.shared.showLoader() : nil
     }
     
     override func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
-        return episodes.isEmpty ? 200 : 0
+        return isShowLoading ? 200 : 0
     }
     
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -66,10 +79,13 @@ class VCEpisodes: UITableViewController {
     }
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        let window = UIApplication.shared.currentWindow
-        let playersDetailView = Bundle.main.loadNibNamed("PlayersDetailView", owner: self)?.first as! PlayersDetailView
-        playersDetailView.episode = self.episodes[indexPath.row]
-        playersDetailView.frame = self.view.frame
-        window?.addSubview(playersDetailView)
+        let episode = episodes[indexPath.row]
+        for (scene) in UIApplication.shared.connectedScenes {
+            if scene.activationState == .foregroundActive {
+                guard let window = scene as? UIWindowScene else { return }
+                let mainTabBarController = window.keyWindow?.rootViewController as? MainTabBarController
+                mainTabBarController?.maximizePlayerDetailView(episode: episode)
+            }
+        }
     }
 }
