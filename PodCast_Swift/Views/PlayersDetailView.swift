@@ -10,6 +10,10 @@ import AVKit
 
 class PlayersDetailView: UIView {
     // MARK: - IBOutlets
+    @IBOutlet weak var mainPlayerStackView: UIStackView!
+    @IBOutlet weak var miniPlayerView: UIView!
+    @IBOutlet weak var miniPlayerImageView: UIImageView!
+    @IBOutlet weak var lblMiniPlayerTitle: UILabel!
     @IBOutlet weak var lblTitle: UILabel!
     @IBOutlet weak var lblAuthor: UILabel!
     @IBOutlet weak var lblTotalTime: UILabel!
@@ -22,13 +26,25 @@ class PlayersDetailView: UIView {
             episodeImageView.transform = shrinkTransform
         }
     }
+    @IBOutlet weak var btnMiniPlayerPause: UIButton! {
+        didSet {
+            btnMiniPlayerPause.addTarget(self, action: #selector(handlePlayPause), for: .touchUpInside)
+        }
+    }
+    @IBOutlet weak var btnMiniPlayerFastForward: UIButton! {
+        didSet {
+            btnMiniPlayerFastForward.addTarget(self, action: #selector(handleMiniFastForward), for: .touchUpInside)
+        }
+    }
     
     // MARK: - Properties
     var episode: Episode! {
         didSet {
+            lblMiniPlayerTitle.text = episode.title
             lblTitle.text = episode.title
             guard let url = URL(string: episode.imageUrl ?? "") else { return }
             episodeImageView.sd_setImage(with: url)
+            miniPlayerImageView.sd_setImage(with: url)
             lblAuthor.text = episode.author
             playEpisode()
         }
@@ -47,7 +63,12 @@ class PlayersDetailView: UIView {
             
             observePlayerCurrentTime()
             observePlayerStartTime()
+            addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(handleTapOnView)))
         }
+    
+    static func initFromNib() -> PlayersDetailView {
+        Bundle.main.loadNibNamed("PlayersDetailView", owner: self)?.first as! PlayersDetailView
+    }
     
     // MARK: - Functions
     fileprivate func playEpisode() {
@@ -82,7 +103,9 @@ class PlayersDetailView: UIView {
     fileprivate func observePlayerStartTime() {
         let time = CMTimeMake(value: 1, timescale: 1)
         player.addBoundaryTimeObserver(forTimes: [NSValue(time: time)], queue: .main) { [weak self] in
-            self?.transformImageToLarge()
+            DispatchQueue.main.async {
+                self?.transformImageToLarge()
+            }
         }
     }
     
@@ -98,21 +121,48 @@ class PlayersDetailView: UIView {
         player.seek(to: seekTime)
     }
     
-    // MARK: - IBActions
-    @IBAction private func btnDismiss(_ sender: UIButton) {
-        self.removeFromSuperview()
+    // MARK: - @Objc
+    @objc fileprivate func handleMiniFastForward() {
+        seekToTime(delta: 15)
     }
     
-    @IBAction fileprivate func btnPlay(_ sender: UIButton) {
+    @objc func handleTapOnView() {
+        for (scene) in UIApplication.shared.connectedScenes {
+            if scene.activationState == .foregroundActive {
+                guard let window = scene as? UIWindowScene else { return }
+                let mainTabBarController = window.keyWindow?.rootViewController as? MainTabBarController
+                mainTabBarController?.maximizePlayerDetailView(episode: nil)
+            }
+        }
+    }
+    
+    @objc fileprivate func handlePlayPause() {
         if player.timeControlStatus == .paused {
-            sender.setImage(UIImage(named: "pause"), for: .normal)
+            btnPlay.setImage(UIImage(named: "pause"), for: .normal)
+            btnMiniPlayerPause.setImage(UIImage(named: "pause"), for: .normal)
             player.play()
             transformImageToLarge()
         } else {
             player.pause()
-            sender.setImage(UIImage(named: "play"), for: .normal)
+            btnPlay.setImage(UIImage(named: "play"), for: .normal)
+            btnMiniPlayerPause.setImage(UIImage(named: "play"), for: .normal)
             transformImageToSmall()
         }
+    }
+    
+    // MARK: - IBActions
+    @IBAction private func btnDismiss(_ sender: UIButton) {
+        for (scene) in UIApplication.shared.connectedScenes {
+            if scene.activationState == .foregroundActive {
+                guard let window = scene as? UIWindowScene else { return }
+                let mainTabBarController = window.keyWindow?.rootViewController as? MainTabBarController
+                mainTabBarController?.minimizePlayerDetailView()
+            }
+        }
+    }
+    
+    @IBAction fileprivate func btnPlay(_ sender: UIButton) {
+       handlePlayPause()
     }
     
     @IBAction fileprivate func handlePlaySlider(_ sender: UISlider) {

@@ -15,6 +15,8 @@ class VCPodcastSearch: UITableViewController, UISearchBarDelegate {
     let cellId = "cellId"
     let searchController = UISearchController(searchResultsController: nil)
     var timer: Timer?
+    var isShowLoading = false
+    
     
     // MARK: - ViewDidLoad
     override func viewDidLoad() {
@@ -39,14 +41,28 @@ class VCPodcastSearch: UITableViewController, UISearchBarDelegate {
         searchBar(searchController.searchBar, textDidChange: "Voong")
     }
     
+    func showLoader() {
+        self.isShowLoading = true
+        self.podcasts.removeAll()
+        self.tableView.reloadData()
+    }
+    
+    func hideLoader() {
+        self.isShowLoading = false
+        LoaderView.shared.hideLoader()
+        self.tableView.reloadData()
+    }
+    
     // MARK: - SearchBar delegate function
     func searchBar(_ searchBar: UISearchBar, textDidChange searchText: String) {
         timer?.invalidate()
         timer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: false, block: { _ in
-            APIService.shared.fetchPodcasts(searchText: searchText) { podcasts in
-                LoaderView.shared.hideLoader()
-                self.podcasts = podcasts
-                self.tableView.reloadData()
+            self.showLoader()
+            APIService.shared.fetchPodcasts(searchText: searchText) {[weak self] podcasts in
+                DispatchQueue.main.async {
+                    self?.podcasts = podcasts
+                    self?.hideLoader()
+                }
             }
         })
     }
@@ -73,11 +89,11 @@ class VCPodcastSearch: UITableViewController, UISearchBarDelegate {
     }
     
     override func tableView(_ tableView: UITableView, viewForFooterInSection section: Int) -> UIView? {
-        return LoaderView.shared.showLoader()
+        return isShowLoading ? LoaderView.shared.showLoader() : nil
     }
-    
+
     override func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
-        return podcasts.isEmpty ? 200 : 0
+        return isShowLoading ? 200 : 0
     }
     
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {

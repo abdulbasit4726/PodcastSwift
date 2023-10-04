@@ -8,6 +8,13 @@
 import UIKit
 
 class MainTabBarController: UITabBarController {
+    
+    // MARK: - Properties
+    let playerDetailView = PlayersDetailView.initFromNib()
+    var maximizeTopAnchor: NSLayoutConstraint!
+    var minimizeTopAnchor: NSLayoutConstraint!
+    
+    // MARK: - ViewDidLoad
     override func viewDidLoad() {
         super.viewDidLoad()
         
@@ -15,11 +22,56 @@ class MainTabBarController: UITabBarController {
         tabBar.tintColor = .purple
         tabBar.unselectedItemTintColor = .gray
         view.backgroundColor = .white
+        tabBar.backgroundColor = .white
         
         setupViewControllers()
+        setupPlayerDetailView()
     }
     
     // MARK: - Functions
+    fileprivate func setupPlayerDetailView() {
+        view.insertSubview(playerDetailView, belowSubview: tabBar)
+        playerDetailView.translatesAutoresizingMaskIntoConstraints = false
+        
+        maximizeTopAnchor = playerDetailView.topAnchor.constraint(equalTo: view.topAnchor, constant: view.frame.height)
+        maximizeTopAnchor.isActive = true
+        
+        minimizeTopAnchor = playerDetailView.topAnchor.constraint(equalTo: tabBar.topAnchor, constant: -64)
+        
+        playerDetailView.leadingAnchor.constraint(equalTo: view.leadingAnchor).isActive = true
+        playerDetailView.bottomAnchor.constraint(equalTo: view.bottomAnchor).isActive = true
+        playerDetailView.trailingAnchor.constraint(equalTo: view.trailingAnchor).isActive = true
+    }
+    
+    @objc func minimizePlayerDetailView() {
+        maximizeTopAnchor.isActive = false
+        minimizeTopAnchor.isActive = true
+        UIView.animate(withDuration: 0.5, delay: 0, usingSpringWithDamping: 0.7, initialSpringVelocity: 1) {
+            self.view.layoutIfNeeded()
+            self.tabBar.isHidden = false
+            self.playerDetailView.mainPlayerStackView.alpha = 0
+            self.playerDetailView.miniPlayerView.alpha = 1
+        }
+    }
+    
+    func maximizePlayerDetailView(episode: Episode?) {
+        maximizeTopAnchor.isActive = true
+        maximizeTopAnchor.constant = 0
+        minimizeTopAnchor.isActive = false
+        
+        if episode != nil {
+            playerDetailView.player.replaceCurrentItem(with: nil)
+            playerDetailView.episode = episode
+        }
+        
+        UIView.animate(withDuration: 0.5, delay: 0, usingSpringWithDamping: 0.7, initialSpringVelocity: 1) {
+            self.view.layoutIfNeeded()
+            self.tabBar.isHidden = true
+            self.playerDetailView.mainPlayerStackView.alpha = 1
+            self.playerDetailView.miniPlayerView.alpha = 0
+        }
+    }
+    
     fileprivate func setupViewControllers() {
         viewControllers = [
             generateNavigationController(with: ViewController(), title: "Favorites", image: "play.circle.fill"),
