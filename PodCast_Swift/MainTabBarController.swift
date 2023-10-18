@@ -13,6 +13,7 @@ class MainTabBarController: UITabBarController {
     let playerDetailView = PlayersDetailView.initFromNib()
     var maximizeTopAnchor: NSLayoutConstraint!
     var minimizeTopAnchor: NSLayoutConstraint!
+    var bottomAnchor: NSLayoutConstraint!
     
     // MARK: - ViewDidLoad
     override func viewDidLoad() {
@@ -38,17 +39,18 @@ class MainTabBarController: UITabBarController {
         
         minimizeTopAnchor = playerDetailView.topAnchor.constraint(equalTo: tabBar.topAnchor, constant: -64)
         
+        bottomAnchor = playerDetailView.bottomAnchor.constraint(equalTo: view.bottomAnchor, constant: view.frame.height)
+        bottomAnchor.isActive = true
         playerDetailView.leadingAnchor.constraint(equalTo: view.leadingAnchor).isActive = true
-        playerDetailView.bottomAnchor.constraint(equalTo: view.bottomAnchor).isActive = true
         playerDetailView.trailingAnchor.constraint(equalTo: view.trailingAnchor).isActive = true
     }
     
     @objc func minimizePlayerDetailView() {
         maximizeTopAnchor.isActive = false
+        bottomAnchor.constant = view.frame.height
         minimizeTopAnchor.isActive = true
         UIView.animate(withDuration: 0.5, delay: 0, usingSpringWithDamping: 0.7, initialSpringVelocity: 1) {
             self.view.layoutIfNeeded()
-//            self.tabBar.isHidden = false
             self.tabBar.alpha = 1
             self.playerDetailView.mainPlayerStackView.alpha = 0
             self.playerDetailView.miniPlayerView.alpha = 1
@@ -56,9 +58,10 @@ class MainTabBarController: UITabBarController {
     }
     
     func maximizePlayerDetailView(episode: Episode?) {
+        minimizeTopAnchor.isActive = false
         maximizeTopAnchor.isActive = true
         maximizeTopAnchor.constant = 0
-        minimizeTopAnchor.isActive = false
+        bottomAnchor.constant = 0
         
         if episode != nil {
             playerDetailView.player.replaceCurrentItem(with: nil)
@@ -68,7 +71,6 @@ class MainTabBarController: UITabBarController {
         UIView.animate(withDuration: 0.5, delay: 0, usingSpringWithDamping: 0.7, initialSpringVelocity: 1) {
             self.view.layoutIfNeeded()
             self.tabBar.alpha = 0
-//            self.tabBar.isHidden = true
             self.playerDetailView.mainPlayerStackView.alpha = 1
             self.playerDetailView.miniPlayerView.alpha = 0
         }

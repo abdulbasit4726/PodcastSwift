@@ -15,4 +15,8 @@ extension UIApplication {
             .flatMap { $0.windows }
             .first { $0.isKeyWindow }
     }
+    
+    static func mainTabBarController() -> MainTabBarController? {
+        return self.shared.currentWindow?.rootViewController as? MainTabBarController
+    }
 }
