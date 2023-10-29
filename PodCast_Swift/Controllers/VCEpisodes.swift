@@ -84,7 +84,7 @@ class VCEpisodes: UITableViewController {
             if scene.activationState == .foregroundActive {
                 guard let window = scene as? UIWindowScene else { return }
                 let mainTabBarController = window.keyWindow?.rootViewController as? MainTabBarController
-                mainTabBarController?.maximizePlayerDetailView(episode: episode)
+                mainTabBarController?.maximizePlayerDetailView(episode: episode, playListEpisodes: self.episodes)
             }
         }
     }

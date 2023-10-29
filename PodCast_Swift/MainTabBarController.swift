@@ -57,7 +57,7 @@ class MainTabBarController: UITabBarController {
         }
     }
     
-    func maximizePlayerDetailView(episode: Episode?) {
+    func maximizePlayerDetailView(episode: Episode?, playListEpisodes: [Episode] = []) {
         minimizeTopAnchor.isActive = false
         maximizeTopAnchor.isActive = true
         maximizeTopAnchor.constant = 0
@@ -67,6 +67,8 @@ class MainTabBarController: UITabBarController {
             playerDetailView.player.replaceCurrentItem(with: nil)
             playerDetailView.episode = episode
         }
+        
+        playerDetailView.playListEpisodes = playListEpisodes
         
         UIView.animate(withDuration: 0.5, delay: 0, usingSpringWithDamping: 0.7, initialSpringVelocity: 1) {
             self.view.layoutIfNeeded()
