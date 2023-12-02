@@ -6,6 +6,7 @@
 //
 
 import UIKit
+import SwiftUI
 
 class MainTabBarController: UITabBarController {
     
@@ -80,7 +81,7 @@ class MainTabBarController: UITabBarController {
     
     fileprivate func setupViewControllers() {
         viewControllers = [
-            generateNavigationController(with: ViewController(), title: "Favorites", image: "play.circle.fill"),
+            generateNavigationController(with: VCFavorites(collectionViewLayout: UICollectionViewFlowLayout()), title: "Favorites", image: "play.circle.fill"),
             generateNavigationController(with: VCPodcastSearch(), title: "Search", image: "magnifyingglass"),
             generateNavigationController(with: ViewController(), title: "Downloads", image: "square.stack.fill")
         ]

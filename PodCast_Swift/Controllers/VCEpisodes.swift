@@ -25,9 +25,17 @@ class VCEpisodes: UITableViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupTableView()
+        setNavBarButtons()
     }
     
     // MARK: - Functions
+    fileprivate func setNavBarButtons() {
+        navigationItem.rightBarButtonItems = [
+            UIBarButtonItem(title: "Favorite", style: .plain, target: self, action: #selector(handleFavorite)),
+            UIBarButtonItem(title: "Fetch", style: .plain, target: self, action: #selector(handleFetchSavedPodcast))
+        ]
+    }
+    
     fileprivate func setupTableView() {
         tableView.register(UINib(nibName: "EpisodeCell", bundle: nil), forCellReuseIdentifier: cellId)
     }
@@ -53,6 +61,22 @@ class VCEpisodes: UITableViewController {
                 self?.hideLoader()
             }
         }
+    }
+    
+    // MARK: - @objc Methods
+    @objc fileprivate func handleFavorite() {
+        guard let podcast = podcast else { return }
+        let encoder = JSONEncoder()
+        if let encoded = try? encoder.encode(podcast) {
+            UserDefaults.standard.set(encoded, forKey: UserDefaults.Keys.FAVORITES_KEY)
+        }
+    }
+    
+    @objc fileprivate func handleFetchSavedPodcast() {
+        guard let data = UserDefaults.standard.data(forKey: UserDefaults.Keys.FAVORITES_KEY) else { return }
+        let decoder = JSONDecoder()
+        let podcast = try? decoder.decode(Podcast.self, from: data)
+        print(podcast?.trackName ?? "", podcast?.artistName ?? "")
     }
     
     // MARK: - Tableview delegate methods
