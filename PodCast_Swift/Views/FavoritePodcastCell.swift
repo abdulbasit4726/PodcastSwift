@@ -10,6 +10,16 @@ import UIKit
 class FavoritePodcastCell: UICollectionViewCell {
     
     // MARK: - Properties
+    
+    var podcast: Podcast! {
+        didSet {
+            nameLabel.text = podcast.trackName
+            artistNameLabel.text = podcast.artistName
+            guard let url = URL(string: podcast.artworkUrl600 ?? "") else { return }
+            imageView.sd_setImage(with: url)
+        }
+    }
+    
     let imageView = UIImageView(image: UIImage(named: "podcast"))
     let nameLabel: UILabel = {
         let label = UILabel()

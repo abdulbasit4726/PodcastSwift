@@ -30,10 +30,11 @@ class VCEpisodes: UITableViewController {
     
     // MARK: - Functions
     fileprivate func setNavBarButtons() {
-        navigationItem.rightBarButtonItems = [
-            UIBarButtonItem(title: "Favorite", style: .plain, target: self, action: #selector(handleFavorite)),
-            UIBarButtonItem(title: "Fetch", style: .plain, target: self, action: #selector(handleFetchSavedPodcast))
-        ]
+        guard let podcast = podcast else { return }
+        let isContainsPodcast = UserDefaults.standard.isContainsPodcast(podcast: podcast)
+        
+        navigationItem.rightBarButtonItem = UIBarButtonItem(image: UIImage(systemName: isContainsPodcast ? "heart.fill" : "heart"), style: .plain, target: self, action: #selector(handleFavorite))
+        
     }
     
     fileprivate func setupTableView() {
@@ -66,17 +67,19 @@ class VCEpisodes: UITableViewController {
     // MARK: - @objc Methods
     @objc fileprivate func handleFavorite() {
         guard let podcast = podcast else { return }
-        let encoder = JSONEncoder()
-        if let encoded = try? encoder.encode(podcast) {
-            UserDefaults.standard.set(encoded, forKey: UserDefaults.Keys.FAVORITES_KEY)
+        var savedPodcasts = UserDefaults.standard.fetchSavedPodcasts()
+        let isContainsPodcast = UserDefaults.standard.isContainsPodcast(podcast: podcast)
+        
+        if isContainsPodcast {
+            guard let index = savedPodcasts.firstIndex(where: {$0.trackName == podcast.trackName && $0.artistName == podcast.artistName}) else { return }
+            savedPodcasts.remove(at: index)
+            navigationItem.rightBarButtonItem?.image = UIImage(systemName: "heart")
+        } else {
+            savedPodcasts.append(podcast)
+            navigationItem.rightBarButtonItem?.image = UIImage(systemName: "heart.fill")
+            UIApplication.mainTabBarController()?.viewControllers?[0].tabBarItem.badgeValue = "New"
         }
-    }
-    
-    @objc fileprivate func handleFetchSavedPodcast() {
-        guard let data = UserDefaults.standard.data(forKey: UserDefaults.Keys.FAVORITES_KEY) else { return }
-        let decoder = JSONDecoder()
-        let podcast = try? decoder.decode(Podcast.self, from: data)
-        print(podcast?.trackName ?? "", podcast?.artistName ?? "")
+        UserDefaults.standard.savePodcast(podcasts: savedPodcasts)
     }
     
     // MARK: - Tableview delegate methods
